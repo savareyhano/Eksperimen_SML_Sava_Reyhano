@@ -1,46 +1,49 @@
 import pandas as pd
-import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-import argparse
 import os
 
-def preprocess_data(input_path, output_path):
-    print(f"Loading data from {input_path}...")
-    df = pd.read_csv(input_path)
-    
-    print("Preprocessing data...")
-    # 1. Menghapus Data Kosong
+def load_data(file_path):
+    """Memuat dataset dari path."""
+    return pd.read_csv(file_path)
+
+def clean_data(df):
+    """Membersihkan data dari nilai kosong dan duplikat."""
     df = df.dropna()
-    
-    # 2. Menghapus Data Duplikat
     df = df.drop_duplicates()
-    
-    # 3. Encoding Label Kategorikal
+    return df
+
+def preprocess_features(df):
+    """Melakukan preprocessing pada fitur (encoding dan scaling)."""
+    # Encoding target
     le = LabelEncoder()
-    if 'class' in df.columns:
-        df['class'] = le.fit_transform(df['class'])
-        
-    # Memisahkan Fitur dan Target
-    X = df.drop('class', axis=1)
-    y = df['class']
+    df['class'] = le.fit_transform(df['class'])
     
-    # 4. Standarisasi Fitur
+    # Standarisasi fitur numerik
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
+    numeric_cols = ['age', 'impluse', 'pressurehight', 'pressurelow', 'glucose', 'kcm', 'troponin']
+    df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
     
-    # Menggabungkan kembali untuk hasil akhir
-    df_processed = pd.concat([X_scaled_df, y.reset_index(drop=True)], axis=1)
+    return df
+
+def run_preprocessing(input_path, output_path):
+    """Menjalankan seluruh alur preprocessing."""
+    print("Memulai preprocessing data...")
+    df = load_data(input_path)
+    print(f"Data awal: {df.shape}")
     
-    print(f"Saving processed data to {output_path}...")
+    df = clean_data(df)
+    print(f"Data setelah cleaning: {df.shape}")
+    
+    df = preprocess_features(df)
+    print("Fitur berhasil di-encode dan di-scale.")
+    
+    # Pastikan direktori output ada
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    df_processed.to_csv(output_path, index=False)
-    print("Preprocessing complete!")
+    df.to_csv(output_path, index=False)
+    print(f"Data bersih disimpan ke: {output_path}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Automate Data Preprocessing")
-    parser.add_argument("--input", type=str, default="../Heart Attack.csv", help="Path to input dataset")
-    parser.add_argument("--output", type=str, default="../dataset_preprocessing/processed_data.csv", help="Path to output processed dataset")
+    input_file = "../dataset/Heart Attack.csv"
+    output_file = "../dataset/Heart_Attack_Clean.csv"
     
-    args = parser.parse_args()
-    preprocess_data(args.input, args.output)
+    run_preprocessing(input_file, output_file)

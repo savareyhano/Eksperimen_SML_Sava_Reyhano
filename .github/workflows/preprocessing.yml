@@ -1,4 +1,4 @@
-name: Data Preprocessing Workflow
+name: Preprocessing Workflow
 
 on:
   push:
@@ -7,30 +7,28 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  preprocess:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python 3.12.7
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12.7"
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pandas numpy scikit-learn
-        
-    - name: Run preprocessing
-      run: |
-        cd preprocessing
-        python automate_Sava_Reyhano.py --input "../Heart Attack.csv" --output "../dataset_preprocessing/processed_data.csv"
-        
-    - name: Commit and push changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add dataset_preprocessing/processed_data.csv
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update processed dataset" && git push)
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.7"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas scikit-learn
+
+      - name: Run Preprocessing Script
+        run: |
+          cd preprocessing
+          python automate_Sava_Reyhano.py
+
+      - name: Upload Processed Data
+        uses: actions/upload-artifact@v3
+        with:
+          name: processed-data
+          path: dataset/Heart_Attack_Clean.csv
